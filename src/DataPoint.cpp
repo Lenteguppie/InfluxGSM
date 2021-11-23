@@ -76,21 +76,16 @@ void DataPoint::putField(String name, String value)
     _fields += value;
 }
 
-String DataPoint::toLineProtocol(String includeTags) const
+String DataPoint::toLineProtocol() const
 {
-    return createLineProtocol(includeTags);
+    return createLineProtocol();
 }
 
-String DataPoint::createLineProtocol(String &incTags) const
+String DataPoint::createLineProtocol()
 {
     String line;
-    line.reserve(_measurement.length() + 1 + incTags.length() + 1 + _tags.length() + 1 + _fields.length() + 1 + _timestamp.length());
+    line.reserve(_measurement.length() + 1 + _tags.length() + 1 + _fields.length() + 1 + _timestamp.length());
     line += _measurement;
-    if (incTags.length() > 0)
-    {
-        line += ",";
-        line += incTags;
-    }
     if (hasTags())
     {
         line += ",";

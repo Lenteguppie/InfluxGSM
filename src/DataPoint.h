@@ -46,7 +46,7 @@ friend class InfluxGSM;
     // True if a point contains timestamp
     bool hasTime() const   { return _timestamp.length() > 0; }
     // Creates line protocol with optionally added tags
-    String toLineProtocol(String includeTags = "") const;
+    String toLineProtocol() const;
     // returns current timestamp
     String getTime() const { return _timestamp; }
 
@@ -61,6 +61,6 @@ friend class InfluxGSM;
     // method for formating field into line protocol
     void putField(String name, String value);
     // Creates line protocol string
-    String createLineProtocol(String &incTags) const;
+    String createLineProtocol() const;
 };
 #endif //_POINT_H_

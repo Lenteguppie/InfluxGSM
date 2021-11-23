@@ -6,7 +6,7 @@ struct ConnectionInfo
     // Connection info
     String serverUrl;
     uint16_t port;
-    Client &comClient;
+    Client *comClient;
     // Write & query targets
     String bucket;
     String org;

@@ -13,13 +13,12 @@
 class InfluxGSM
 {
 public:
-    InfluxGSM();
-    InfluxGSM(const char *serverUrl, uint16_t port, Client &comClient, const char *org, const char *bucket, const char *authToken);
+    InfluxGSM(const char *serverUrl, uint16_t port, Client &comClient, const char *org, const char *bucket, const char *authToken, WritePrecision precision = WritePrecision::NoTime);
 
     void setConnectionInfo(const char *serverUrl, uint16_t port, Client &comClient, const char *org, const char *bucket, const char *authToken);
     void setPrecision(WritePrecision precision);
 
-    String pointToLineProtocol(const Point& point);
+    String pointToLineProtocol(const DataPoint& point);
     
     bool writePoint(DataPoint &dp);
     bool isConnected();
@@ -32,11 +31,11 @@ private:
     int doPOST(String path, String data);
     
     ConnectionInfo connectionInfo;
-    HttpClient _client;
+    // HttpClient _client;
     WritePrecision _precision;
 
     String _writePath;
     String _statusPath;
     
-}
+};
 #endif

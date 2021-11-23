@@ -17,18 +17,23 @@ static String precisionToString(WritePrecision precision, uint8_t version = 2)
     }
 }
 
+// InfluxGSM::InfluxGSM(){
+//     INFLUXDB_CLIENT_DEBUG("[E] No connection set yet\n");
+//     InfluxGSM(nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr);
+// }
+
 InfluxGSM::InfluxGSM(const char *serverUrl, uint16_t port, Client &comClient, const char *org, const char *bucket, const char *authToken, WritePrecision precision)
 {
     setConnectionInfo(serverUrl, port, comClient, org, bucket, authToken);
     setPrecision(precision);
 }
 
-void setPrecision(WritePrecision precision)
+void InfluxGSM::setPrecision(WritePrecision precision)
 {
     _precision = precision;
 }
 
-void InfluxGSM::setConnectionInfo(const char *serverUrl, uint16_t port, Client &comClient, const char *org, const char *bucket, const char *authToken)
+void InfluxGSM::setConnectionInfo(const char *serverUrl, uint16_t port, Client comClient, const char *org, const char *bucket, const char *authToken)
 {
     connectionInfo.serverUrl = serverUrl;
     connectionInfo.port = port;
@@ -36,31 +41,30 @@ void InfluxGSM::setConnectionInfo(const char *serverUrl, uint16_t port, Client &
     connectionInfo.org = org;
     connectionInfo.bucket = bucket;
     connectionInfo.authToken = authToken;
-
-    _client = new HttpClient(connectionInfo.comClient, connectionInfo.serverUrl, connectionInfo.port);
 }
 
-String InfluxGSM::pointToLineProtocol(const Point& point) {
-    return point.createLineProtocol(_writeOptions._defaultTags);
+String InfluxGSM::pointToLineProtocol(const DataPoint &point)
+{
+    return point.createLineProtocol();
 }
 
 bool InfluxGSM::init()
 {
     INFLUXDB_CLIENT_DEBUG("[D]  Initializing InfluxGSM a new instance");
     constructEndPoints();
-    if (_connInfo.serverUrl.length() == 0 || (_connInfo.dbVersion == 2 && (_connInfo.org.length() == 0 || _connInfo.bucket.length() == 0 || _connInfo.authToken.length() == 0)))
+    if (connectionInfo.serverUrl.length() == 0 || (connectionInfo.dbVersion == 2 && (connectionInfo.org.length() == 0 || connectionInfo.bucket.length() == 0 || connectionInfo.authToken.length() == 0)))
     {
         INFLUXDB_CLIENT_DEBUG("[E] Invalid parameters\n");
-        _connInfo.lastError = F("Invalid parameters");
+        connectionInfo.lastError = F("Invalid parameters");
         return false;
     }
-    if (_connInfo.serverUrl.endsWith("/"))
+    if (connectionInfo.serverUrl.endsWith("/"))
     {
-        _connInfo.serverUrl = _connInfo.serverUrl.substring(0, _connInfo.serverUrl.length() - 1);
+        connectionInfo.serverUrl = connectionInfo.serverUrl.substring(0, connectionInfo.serverUrl.length() - 1);
     }
-    if (!_connInfo.serverUrl.startsWith("http"))
+    if (!connectionInfo.serverUrl.startsWith("http"))
     {
-        _connInfo.lastError = F("Invalid URL scheme");
+        connectionInfo.lastError = F("Invalid URL scheme");
         return false;
     }
 
@@ -71,8 +75,8 @@ void InfluxGSM::constructEndPoints()
 {
     // construct write endpoint
     _writePath = "/write?";
-    _writePath += "bucket=" + String(bucket);
-    _writePath += "org=" + String(org);
+    _writePath += "bucket=" + String(connectionInfo.bucket);
+    _writePath += "org=" + String(connectionInfo.org);
     _writePath += "precision=" + precisionToString(_precision);
     INFLUXDB_CLIENT_DEBUG("[D]  Write path: %s\n", _writePath.c_str());
 
@@ -80,14 +84,16 @@ void InfluxGSM::constructEndPoints()
     INFLUXDB_CLIENT_DEBUG("[D]  Status path: %s\n", _statusPath.c_str());
 }
 
-bool InfluxGSM::writePoint(DataPoint &dp){
+bool InfluxGSM::writePoint(DataPoint &dp)
+{
     String postData = pointToLineProtocol(dp);
-    response = doPOST(_writePath, postData); 
-    return (response == "204");
+    int response = doPOST(_writePath, postData);
+    return (response == 204);
 }
 
 int InfluxGSM::doPOST(String path, String data)
 {
+    HttpClient _client(*connectionInfo.comClient, connectionInfo.serverUrl, connectionInfo.port);
     _client.beginRequest();
     _client.post(path.c_str());
     _client.sendHeader("Content-Type", "application/json");

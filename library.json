@@ -1,6 +1,6 @@
 {
     "name": "InfluxGSM",
-    "description": "On the official InfluxDBClient library based library for GSM devices or devices which makes use of ArduinoHTTPClient",
+    "description": "This library allows writing and reading data from InfluxDB server or InfluxDB Cloud. Supports authentication, secure communication over TLS, GSM communication, batching and retrying.",
     "repository":
     {
       "type": "git",
