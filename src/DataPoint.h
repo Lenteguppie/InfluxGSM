@@ -61,6 +61,6 @@ friend class InfluxGSM;
     // method for formating field into line protocol
     void putField(String name, String value);
     // Creates line protocol string
-    String createLineProtocol() const;
+    String createLineProtocol();
 };
 #endif //_POINT_H_

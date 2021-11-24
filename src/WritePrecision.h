@@ -27,14 +27,16 @@
 #ifndef _WRITE_PRECISION_H_
 #define _WRITE_PRECISION_H_
 // Enum WritePrecision defines constants for specifying InfluxDB write prcecision
-enum class WritePrecision  {
-  // Specifyies that points has no timestamp (default). Server will assign timestamp. 
+
+enum class WritePrecision
+{
+  // Specifyies that points has no timestamp (default). Server will assign timestamp.
   NoTime = 0,
   // Seconds
   S,
-  // Milli-seconds 
+  // Milli-seconds
   MS,
-  // Micro-seconds 
+  // Micro-seconds
   US,
   // Nano-seconds
   NS

@@ -78,12 +78,7 @@ void DataPoint::putField(String name, String value)
 
 String DataPoint::toLineProtocol() const
 {
-    return createLineProtocol();
-}
-
-String DataPoint::createLineProtocol()
-{
-    String line;
+        String line;
     line.reserve(_measurement.length() + 1 + _tags.length() + 1 + _fields.length() + 1 + _timestamp.length());
     line += _measurement;
     if (hasTags())

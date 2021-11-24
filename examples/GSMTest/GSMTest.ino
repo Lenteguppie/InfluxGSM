@@ -21,6 +21,8 @@ const char gprsPass[] = "vodafone";
 // InfluxDB v2 bucket name (Use: InfluxDB UI ->  Data -> Buckets)
 #define INFLUXDB_BUCKET "Smaddle device"
 
+String writePath, healthPath;
+
 #define uS_TO_S_FACTOR 1000000ULL // Conversion factor for micro seconds to seconds
 #define TIME_TO_SLEEP 60          // Time ESP32 will go to sleep (in seconds)
 
@@ -39,7 +41,8 @@ const char gprsPass[] = "vodafone";
 // #define DUMP_AT_COMMANDS
 
 #include <TinyGsmClient.h>
-#include <InfluxGSM.h>
+#include <ArduinoHttpClient.h>
+#include <DataPoint.h>
 
 #include <SPI.h>
 #include <Ticker.h>
@@ -53,7 +56,8 @@ TinyGsm modem(SerialAT);
 #endif
 
 TinyGsmClient client(modem);
-InfluxGSM influx(INFLUXDB_URL, INFLUXDB_PORT, client, INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_TOKEN);
+HttpClient influx(client, INFLUXDB_URL, INFLUXDB_PORT);
+// InfluxGSM influx(INFLUXDB_URL, INFLUXDB_PORT, client, INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_TOKEN);
 
 #define UART_BAUD 9600
 #define PIN_DTR 25
@@ -225,6 +229,41 @@ void disconnectLTE()
 #endif
 }
 
+void constructEndpoints()
+{
+    //Construct writepath endpoint
+    writePath = "/write";
+    writePath += "bucket=";
+    writePath += INFLUXDB_BUCKET;
+    writePath += "&org=";
+    writePath += INFLUXDB_ORG;
+    writePath += "&precision=ms";
+}
+
+bool sendPOST(String path, String data)
+{
+
+    influx.beginRequest();
+    influx.post(writePath);
+    influx.sendHeader("Content-Type", "application/json");
+    influx.sendHeader("Content-Length", data.length());
+    influx.sendHeader("Authorization", String("TOKEN " + String(INFLUXDB_TOKEN)));
+    influx.beginBody();
+    influx.print(data);
+    influx.endRequest();
+
+    // read the status code and body of the response
+    int statusCode = influx.responseStatusCode();
+    String response = influx.responseBody();
+
+    Serial.print("Status code: ");
+    Serial.println(statusCode);
+    Serial.print("Response: ");
+    Serial.println(response);
+
+    return statusCode == 204;
+}
+
 void sendSensorData()
 {
     sensor.clearFields();
@@ -232,10 +271,8 @@ void sendSensorData()
     sensor.addField("lat", 1.3423);
     sensor.addField("lon", 3.434);
     sensor.addField("millis", millis());
-
-    if (!influx.writePoint(sensor))
-    {
-        Serial.println("InfluxDB write failed...");
+    if(!sendPOST(writePath, sensor.toLineProtocol())){
+        Serial.println("Something went wrong sending data to InfluxDB");
     }
 }
 
